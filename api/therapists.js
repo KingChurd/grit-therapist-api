@@ -11,6 +11,17 @@ const MENTAL_HEALTH_TAXONOMY_CODES = [
 ];
 
 module.exports = async (req, res) => {
+  // CORS for all responses
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET,OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+
+  // Handle preflight
+  if (req.method === "OPTIONS") {
+    res.statusCode = 200;
+    return res.end();
+  }
+
   // Allow GET only
   if (req.method !== "GET") {
     res.statusCode = 405;
@@ -89,8 +100,16 @@ module.exports = async (req, res) => {
           const combinedTaxDesc = t.taxonomies
             .map((tx) => tx.desc.toLowerCase())
             .join(" ");
-          if (combinedTaxDesc.includes("addiction") && focusLower.includes("addiction")) score += 2;
-          if (combinedTaxDesc.includes("family") && focusLower.includes("marriage")) score += 2;
+          if (
+            combinedTaxDesc.includes("addiction") &&
+            focusLower.includes("addiction")
+          )
+            score += 2;
+          if (
+            combinedTaxDesc.includes("family") &&
+            focusLower.includes("marriage")
+          )
+            score += 2;
           if (combinedTaxDesc.includes("mental health")) score += 1;
         }
 
@@ -98,7 +117,6 @@ module.exports = async (req, res) => {
       })
       .sort((a, b) => b.score - a.score);
 
-    res.setHeader("Access-Control-Allow-Origin", "*");
     res.statusCode = 200;
     return res.json({
       query: { zip, focus: focus || null },
@@ -108,7 +126,9 @@ module.exports = async (req, res) => {
   } catch (err) {
     console.error(err);
     res.statusCode = 500;
-    return res.json({ error: "Internal error", detail: err.message });
+    return res.json({
+      error: "Internal error",
+      detail: err.message || "Unknown error",
+    });
   }
 };
-
